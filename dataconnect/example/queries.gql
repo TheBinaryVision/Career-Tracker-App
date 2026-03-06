@@ -1,0 +1,59 @@
+query AllPublicIdeas @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public") {
+  ideas(where: { isPublic: { eq: true } }) {
+    id
+    title
+    description
+    createdAt
+    author {
+      displayName
+    }
+    tags
+  }
+}
+
+query MyProjects @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  projects(where: { owner: { id_expr: "auth.uid" } }) {
+    id
+    name
+    description
+    createdAt
+    isPublic
+    owner {
+      displayName
+    }
+    ideas_via_ProjectIdea {
+      id
+      title
+      note
+    }
+  }
+}
+
+mutation CreateIdea($title: String!, $description: String!, $isPublic: Boolean!, $tags: [String!]) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  idea_insert(
+    data: {
+      title: $title
+      description: $description
+      createdAt_expr: "request.time"
+      isPublic: $isPublic
+      authorId_expr: "auth.uid"
+      tags: $tags
+    }
+  ) {
+    id
+  }
+}
+
+mutation AddIdeaToProject($projectId: UUID!, $ideaId: UUID!, $note: String) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  projectIdea_insert(
+    data: {
+      projectId: $projectId
+      ideaId: $ideaId
+      addedAt_expr: "request.time"
+      note: $note
+    }
+  ) {
+    projectId
+    ideaId
+  }
+}

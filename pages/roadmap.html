@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Dev Roadmap — Roadmap</title>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <link rel="stylesheet" href="../css/roadmap.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">🤖 AI Dev</div>
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="roadmap.html" class="nav-link active">Roadmap</a>
+      <a href="checkin.html" class="nav-link">Check-In</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="logoutUser()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="roadmap-header">
+      <h2>🗺️ Your Roadmap</h2>
+      <div class="overall-progress-wrap">
+        <div class="overall-progress-labels">
+          <span>Overall Progress</span>
+          <strong id="overall-pct">0%</strong>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="overall-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE TABS -->
+    <div class="phase-tabs" id="phase-tabs"></div>
+
+    <!-- PHASE CONTENT -->
+    <div id="phase-content"></div>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/roadmap-data.js"></script>
+  <script src="../js/roadmap.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Dev Roadmap — Dashboard</title>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <link rel="stylesheet" href="../css/dashboard.css"/>
+  <meta name="theme-color" content="#0a0a0f"/>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="nav-brand">🤖 AI Dev</div>
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link active">Dashboard</a>
+      <a href="roadmap.html" class="nav-link">Roadmap</a>
+      <a href="checkin.html" class="nav-link">Check-In</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username">Loading...</span>
+      <button class="btn-logout" onclick="logoutUser()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- GREETING -->
+    <div class="greeting-row">
+      <div>
+        <h2 class="greeting-text" id="greeting-text">Good morning 👋</h2>
+        <p class="greeting-sub" id="greeting-sub">Let's keep building.</p>
+      </div>
+      <div class="streak-badge">
+        <span class="streak-fire">🔥</span>
+        <span id="streak-number">0</span>
+        <span class="streak-label">day streak</span>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-value" id="stat-today-time">0m</div>
+        <div class="stat-label">Today's Time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value" id="stat-total-days">0</div>
+        <div class="stat-label">Days Active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" id="stat-skills-done">0</div>
+        <div class="stat-label">Skills Done</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value" id="stat-efficiency">—</div>
+        <div class="stat-label">Efficiency</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value" id="stat-total-time">0h</div>
+        <div class="stat-label">Total Hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🐙</div>
+        <div class="stat-value" id="stat-github">—</div>
+        <div class="stat-label">GitHub Commits</div>
+      </div>
+    </div>
+
+    <!-- TWO COLUMN -->
+    <div class="two-col">
+
+      <!-- ACTIVITY HEATMAP -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📆 Activity Heatmap</span>
+          <span class="card-sub">Last 12 weeks</span>
+        </div>
+        <div class="heatmap-wrap" id="heatmap"></div>
+        <div class="heatmap-legend">
+          <span>Less</span>
+          <div class="heatmap-legend-boxes">
+            <div class="hm-box lvl-0"></div>
+            <div class="hm-box lvl-1"></div>
+            <div class="hm-box lvl-2"></div>
+            <div class="hm-box lvl-3"></div>
+            <div class="hm-box lvl-4"></div>
+          </div>
+          <span>More</span>
+        </div>
+      </div>
+
+      <!-- TODAY'S LOG -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📝 Today's Log</span>
+          <button class="btn-sm" onclick="window.location.href='checkin.html'">+ Check In</button>
+        </div>
+        <div id="today-log-content">
+          <div class="empty-state">No check-in yet today.<br/>Start your daily log →</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- GITHUB ACTIVITY -->
+    <div class="card" id="github-card" style="display:none">
+      <div class="card-header">
+        <span class="card-title">🐙 GitHub Activity</span>
+        <span class="card-sub" id="github-username-label"></span>
+      </div>
+      <div id="github-commits-list"></div>
+    </div>
+
+    <!-- RECENT SESSIONS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🕐 Recent Sessions</span>
+      </div>
+      <div id="recent-sessions"></div>
+    </div>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/tracker.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

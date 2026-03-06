@@ -1,0 +1,65 @@
+mutation CreateSeedData @transaction @auth(level: PUBLIC, insecureReason: "This is seed data for development and testing purposes, safe for public access during initial setup.") {
+  user1: user_insert(data: {
+    id: "00000000-0000-0000-0000-000000000001",
+    displayName: "Alice Smith",
+    email: "alice.smith@example.com",
+    createdAt: "2023-01-01T10:00:00Z",
+    profilePictureUrl: "https://example.com/alice.jpg",
+    bio: "Passionate about tech and innovation."
+  })
+  user2: user_insert(data: {
+    id: "00000000-0000-0000-0000-000000000002",
+    displayName: "Bob Johnson",
+    email: "bob.johnson@example.com",
+    createdAt: "2023-01-05T11:30:00Z",
+    profilePictureUrl: "https://example.com/bob.jpg",
+    bio: "Software engineer and open-source enthusiast."
+  })
+  project1: project_insert(data: {
+    id: "00000000-0000-0000-0000-000000000010",
+    name: "Career Tracker App",
+    description: "An application to help users track their career progress and ideas.",
+    isPublic: true,
+    createdAt: "2023-01-10T09:00:00Z",
+    ownerId: "00000000-0000-0000-0000-000000000001"
+  })
+  project2: project_insert(data: {
+    id: "00000000-0000-0000-0000-000000000011",
+    name: "AI-Powered Resume Builder",
+    description: "A tool that uses AI to optimize resumes for job applications.",
+    isPublic: false,
+    createdAt: "2023-02-01T14:00:00Z",
+    ownerId: "00000000-0000-0000-0000-000000000002"
+  })
+  idea1: idea_insert(data: {
+    id: "00000000-0000-0000-0000-000000000020",
+    title: "Gamified Skill Development",
+    description: "Implement gamification elements to make skill learning more engaging.",
+    isPublic: true,
+    createdAt: "2023-01-15T12:00:00Z",
+    authorId: "00000000-0000-0000-0000-000000000001",
+    tags: ["gamification", "learning", "engagement"]
+  })
+  idea2: idea_insert(data: {
+    id: "00000000-0000-0000-0000-000000000021",
+    title: "Automated Job Search Agent",
+    description: "An agent that autonomously searches and applies for jobs based on user preferences.",
+    isPublic: false,
+    createdAt: "2023-02-10T16:00:00Z",
+    authorId: "00000000-0000-0000-0000-000000000002",
+    tags: ["automation", "job search", "AI"]
+  })
+  projectIdea1: projectIdea_insert(data: {
+    projectId: "00000000-0000-0000-0000-000000000010",
+    ideaId: "00000000-0000-0000-0000-000000000020",
+    addedAt: "2023-01-20T08:00:00Z",
+    note: "Consider for Phase 2 implementation."
+  })
+  comment1: comment_insert(data: {
+    id: "00000000-0000-0000-0000-000000000030",
+    content: "Great idea, Alice! We should definitely explore this.",
+    createdAt: "2023-01-22T09:00:00Z",
+    authorId: "00000000-0000-0000-0000-000000000002",
+    ideaId: "00000000-0000-0000-0000-000000000020"
+  })
+}

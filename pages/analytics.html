@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Dev Roadmap — Analytics</title>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <link rel="stylesheet" href="../css/analytics.css"/>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">🤖 AI Dev</div>
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="roadmap.html" class="nav-link">Roadmap</a>
+      <a href="checkin.html" class="nav-link">Check-In</a>
+      <a href="analytics.html" class="nav-link active">Analytics</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="logoutUser()">Logout</button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="analytics-header">
+      <h2>📊 Your Analytics</h2>
+      <div class="period-tabs">
+        <button class="period-tab active" onclick="setPeriod(7, this)">7 days</button>
+        <button class="period-tab" onclick="setPeriod(30, this)">30 days</button>
+        <button class="period-tab" onclick="setPeriod(90, this)">90 days</button>
+        <button class="period-tab" onclick="setPeriod(0, this)">All time</button>
+      </div>
+    </div>
+
+    <!-- KPI ROW -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-avg-hours">—</div>
+        <div class="kpi-label">Avg Hours/Day</div>
+        <div class="kpi-trend" id="kpi-hours-trend"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-avg-efficiency">—</div>
+        <div class="kpi-label">Avg Efficiency</div>
+        <div class="kpi-trend" id="kpi-eff-trend"></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-streak">—</div>
+        <div class="kpi-label">Best Streak</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-total-hours">—</div>
+        <div class="kpi-label">Total Hours</div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- HOURS CHART -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">⏱️ Daily Hours</span>
+        </div>
+        <div class="chart-area" id="hours-chart"></div>
+      </div>
+      <!-- EFFICIENCY CHART -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">📈 Efficiency Over Time</span>
+        </div>
+        <div class="chart-area" id="efficiency-chart"></div>
+      </div>
+    </div>
+
+    <!-- MOOD & ENERGY -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">😄 Mood Trend</span>
+        </div>
+        <div class="chart-area" id="mood-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">🛠️ Tools Used</span>
+        </div>
+        <div id="tools-breakdown"></div>
+      </div>
+    </div>
+
+    <!-- WEEKLY PATTERN -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📅 Weekly Pattern — Which days are you most productive?</span>
+      </div>
+      <div class="weekday-chart" id="weekday-chart"></div>
+    </div>
+
+    <!-- CAPACITY BREAKDOWN -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🔋 Working Capacity Distribution</span>
+      </div>
+      <div class="capacity-chart" id="capacity-chart"></div>
+    </div>
+
+    <!-- OS & DEVICE -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">💻 Device & OS Info</span>
+      </div>
+      <div id="device-info"></div>
+    </div>
+
+    <!-- CHECK-IN HISTORY -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📋 Check-In History</span>
+      </div>
+      <div id="checkin-history"></div>
+    </div>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/tracker.js"></script>
+  <script src="../js/analytics.js"></script>
+</body>
+</html>

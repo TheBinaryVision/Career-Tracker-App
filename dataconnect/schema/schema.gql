@@ -1,0 +1,41 @@
+type User @table {
+  displayName: String!
+  createdAt: Timestamp!
+  email: String
+  profilePictureUrl: String
+  bio: String
+}
+
+type Idea @table {
+  title: String!
+  description: String!
+  createdAt: Timestamp!
+  isPublic: Boolean!
+  author: User
+  tags: [String]
+  updatedAt: Timestamp
+}
+
+type Comment @table {
+  content: String!
+  createdAt: Timestamp!
+  author: User
+  idea: Idea
+  updatedAt: Timestamp
+}
+
+type Project @table {
+  name: String!
+  createdAt: Timestamp!
+  isPublic: Boolean!
+  owner: User
+  description: String
+  updatedAt: Timestamp
+}
+
+type ProjectIdea @table(key: ["project", "idea"]) {
+  project: Project!
+  idea: Idea!
+  addedAt: Timestamp!
+  note: String
+}
