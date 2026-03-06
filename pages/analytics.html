@@ -6,6 +6,7 @@
   <title>AI Dev Roadmap — Analytics</title>
   <link rel="stylesheet" href="../css/global.css"/>
   <link rel="stylesheet" href="../css/analytics.css"/>
+  <link rel="stylesheet" href="../css/todo.css"/>
 </head>
 <body>
   <nav class="navbar">
@@ -21,6 +22,12 @@
       <button class="btn-logout" onclick="logoutUser()">Logout</button>
     </div>
   </nav>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display:none">
+    <span>📡 You're offline —</span>
+    <span id="offline-queue-count">Changes will sync when back online</span>
+  </div>
 
   <main class="main-content">
     <div class="analytics-header">
@@ -128,6 +135,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/offline-queue.js"></script>
   <script src="../js/tracker.js"></script>
   <script src="../js/analytics.js"></script>
 </body>

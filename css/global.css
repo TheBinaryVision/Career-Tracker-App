@@ -215,3 +215,18 @@ body {
   .main-content { padding: 16px 14px 60px; }
   .navbar { padding: 0 14px; }
 }
+
+/* ---- OFFLINE BANNER (global) ---- */
+.offline-banner {
+  background: #7c2d12;
+  border-bottom: 1px solid #9a3412;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #fed7aa;
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+}

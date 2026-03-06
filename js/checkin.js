@@ -139,10 +139,11 @@ async function submitCheckin() {
     ...deviceInfo
   };
 
-  // Save to Firestore under users/{uid}/checkins/{today}
-  await db.collection('users').doc(uid)
-    .collection('checkins').doc(today)
-    .set(payload);
+  // Save to Firestore (works offline — will sync when back online)
+  await OfflineQueue.safeSet(
+    `users/${uid}/checkins/${today}`,
+    payload
+  );
 
   // Show success screen
   document.getElementById(`step-${currentStep}`).classList.add('hidden');

@@ -87,12 +87,13 @@ async function toggleSkill(phaseId, skillName) {
   const key  = `${phaseId}-${skillName}`;
   checkedSkills[key] = !checkedSkills[key];
 
-  // Save to Firebase
+  // Save to Firebase (works offline too)
   const uid = getUID();
   if (uid) {
-    await db.collection('users').doc(uid).update({
-      [`checkedSkills.${key}`]: checkedSkills[key]
-    });
+    await OfflineQueue.safeUpdate(
+      `users/${uid}`,
+      { [`checkedSkills.${key}`]: checkedSkills[key] }
+    );
   }
 
   renderPhase();

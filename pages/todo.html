@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Dev Roadmap — To-Do</title>
+  <link rel="manifest" href="../manifest.json"/>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <link rel="stylesheet" href="../css/todo.css"/>
+  <meta name="theme-color" content="#0a0a0f"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-brand">🤖 AI Dev</div>
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="roadmap.html"   class="nav-link">Roadmap</a>
+      <a href="checkin.html"   class="nav-link">Check-In</a>
+      <a href="todo.html"      class="nav-link active">To-Do</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="logoutUser()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display:none">
+    <span>📡 You're offline —</span>
+    <span id="offline-queue-count">Changes will sync when back online</span>
+  </div>
+
+  <main class="main-content">
+
+    <!-- HEADER -->
+    <div class="todo-header">
+      <div>
+        <h2 class="todo-title">📝 To-Do List</h2>
+        <p class="todo-sub">Daily goals, roadmap tasks, and anything you want to track.</p>
+      </div>
+      <div class="todo-stats-mini">
+        <span id="todo-done-count">0</span>/<span id="todo-total-count">0</span>
+        <span style="color:var(--muted);font-size:12px">done today</span>
+      </div>
+    </div>
+
+    <!-- ADD TASK BAR -->
+    <div class="add-task-bar">
+      <div class="add-task-inputs">
+        <input type="text" id="new-task-text" placeholder="Add a task… e.g. 'Complete React hooks tutorial'" maxlength="200"/>
+        <div class="add-task-row2">
+          <select id="new-task-category" class="task-select">
+            <option value="roadmap">🗺️ Roadmap</option>
+            <option value="daily">📅 Daily Goal</option>
+            <option value="learning">📚 Learning</option>
+            <option value="project">🛠️ Project</option>
+            <option value="other">📌 Other</option>
+          </select>
+          <select id="new-task-priority" class="task-select">
+            <option value="medium">⚡ Medium</option>
+            <option value="high">🔴 High</option>
+            <option value="low">🟢 Low</option>
+          </select>
+          <input type="date" id="new-task-due" class="task-select" title="Due date (optional)"/>
+        </div>
+      </div>
+      <button class="btn-add-task" onclick="addTask()">+ Add</button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-row">
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all', this)">All</button>
+        <button class="filter-tab" onclick="setFilter('today', this)">Today</button>
+        <button class="filter-tab" onclick="setFilter('roadmap', this)">🗺️ Roadmap</button>
+        <button class="filter-tab" onclick="setFilter('daily', this)">📅 Daily</button>
+        <button class="filter-tab" onclick="setFilter('learning', this)">📚 Learning</button>
+        <button class="filter-tab" onclick="setFilter('project', this)">🛠️ Project</button>
+        <button class="filter-tab" onclick="setFilter('done', this)">✅ Done</button>
+      </div>
+      <select class="task-select" id="sort-select" onchange="renderTasks()">
+        <option value="created">Newest first</option>
+        <option value="priority">By priority</option>
+        <option value="due">By due date</option>
+      </select>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="todo-progress-wrap">
+      <div class="todo-progress-bar-bg">
+        <div class="todo-progress-bar-fill" id="todo-progress-fill"></div>
+      </div>
+      <span class="todo-progress-label" id="todo-progress-label">0% complete</span>
+    </div>
+
+    <!-- ROADMAP QUICK-ADD -->
+    <div class="card" id="roadmap-quickadd-card">
+      <div class="card-header">
+        <span class="card-title">🗺️ Quick-add from Roadmap</span>
+        <button class="btn-sm" onclick="toggleQuickAdd()">Show/Hide</button>
+      </div>
+      <div id="roadmap-quickadd-list" style="display:none"></div>
+    </div>
+
+    <!-- TASK LIST -->
+    <div id="task-list"></div>
+
+    <!-- EMPTY STATE -->
+    <div id="todo-empty" class="empty-state" style="display:none">
+      Nothing here yet.<br/>Add your first task above! 👆
+    </div>
+
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/offline-queue.js"></script>
+  <script src="../js/roadmap-data.js"></script>
+  <script src="../js/todo.js"></script>
+</body>
+</html>

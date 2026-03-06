@@ -7,6 +7,7 @@
   <link rel="manifest" href="../manifest.json"/>
   <link rel="stylesheet" href="../css/global.css"/>
   <link rel="stylesheet" href="../css/dashboard.css"/>
+  <link rel="stylesheet" href="../css/todo.css"/>
   <meta name="theme-color" content="#0a0a0f"/>
 </head>
 <body>
@@ -18,6 +19,7 @@
       <a href="dashboard.html" class="nav-link active">Dashboard</a>
       <a href="roadmap.html" class="nav-link">Roadmap</a>
       <a href="checkin.html" class="nav-link">Check-In</a>
+      <a href="todo.html" class="nav-link">To-Do</a>
       <a href="analytics.html" class="nav-link">Analytics</a>
     </div>
     <div class="nav-user">
@@ -27,6 +29,12 @@
   </nav>
 
   <!-- MAIN -->
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display:none">
+    <span>📡 You're offline —</span>
+    <span id="offline-queue-count">Changes will sync when back online</span>
+  </div>
+
   <main class="main-content">
 
     <!-- GREETING -->
@@ -136,6 +144,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="../js/firebase-config.js"></script>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/offline-queue.js"></script>
   <script src="../js/tracker.js"></script>
   <script src="../js/dashboard.js"></script>
 </body>
