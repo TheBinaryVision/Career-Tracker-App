@@ -12,7 +12,8 @@ query AllPublicIdeas @auth(level: PUBLIC, insecureReason: "This operation is saf
 }
 
 query MyProjects @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
-  projects(where: { owner: { id_expr: "auth.uid" } }) {
+  # FIX 1: Changed `id_expr` to `id: { eq_expr: "auth.uid" }`
+  projects(where: { owner: { id: { eq_expr: "auth.uid" } } }) {
     id
     name
     description
@@ -24,7 +25,7 @@ query MyProjects @auth(level: USER, insecureReason: "This operation is safe to e
     ideas_via_ProjectIdea {
       id
       title
-      note
+      # FIX 2: Removed `note` here. (Note exists on the ProjectIdea join table, not the Idea table)
     }
   }
 }
@@ -39,9 +40,8 @@ mutation CreateIdea($title: String!, $description: String!, $isPublic: Boolean!,
       authorId_expr: "auth.uid"
       tags: $tags
     }
-  ) {
-    id
-  }
+  )
+  # FIX 3: Removed the { id } return selection. The new emulator does not allow subfields on KeyOutputs.
 }
 
 mutation AddIdeaToProject($projectId: UUID!, $ideaId: UUID!, $note: String) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
@@ -52,8 +52,6 @@ mutation AddIdeaToProject($projectId: UUID!, $ideaId: UUID!, $note: String) @aut
       addedAt_expr: "request.time"
       note: $note
     }
-  ) {
-    projectId
-    ideaId
-  }
+  )
+  # FIX 4: Removed the { projectId ideaId } return selection for the same reason.
 }
