@@ -1,4 +1,4 @@
-# 🤖 AI Dev Roadmap — Full App
+# 🤖 Study Tracker — Full App
 
 A full web app with Firebase auth, Firestore backend, daily check-ins,
 streak tracking, analytics, GitHub activity, and session time logging.
@@ -8,7 +8,7 @@ streak tracking, analytics, GitHub activity, and session time logging.
 ## 📁 File Structure
 
 ```
-aidev-app/
+Study-Tracker-app/
 ├── index.html              ← Login / Signup page
 ├── manifest.json           ← PWA config
 ├── sw.js                   ← Service worker (offline)
@@ -41,7 +41,7 @@ aidev-app/
 ## 🔥 STEP 1 — Create Your Firebase Project
 
 1. Go to **console.firebase.google.com**
-2. Click **"Add project"** → Name it "aidev-roadmap" → Click Create
+2. Click **"Add project"** → Name it "Study-Tracker" → Click Create
 3. Go to **Project Settings** (gear icon) → scroll to "Your apps"
 4. Click **</>** (Web app) → Register with name "AI Dev Web"
 5. Copy the config object shown — it looks like:
@@ -49,9 +49,9 @@ aidev-app/
 ```javascript
 const firebaseConfig = {
   apiKey: "AIzaSy...",
-  authDomain: "aidev-roadmap.firebaseapp.com",
-  projectId: "aidev-roadmap",
-  storageBucket: "aidev-roadmap.appspot.com",
+  authDomain: "Study-Tracker.firebaseapp.com",
+  projectId: "Study-Tracker",
+  storageBucket: "Study-Tracker.appspot.com",
   messagingSenderId: "123456789",
   appId: "1:123456789:web:abc123"
 };
@@ -99,7 +99,7 @@ service cloud.firestore {
 ## 🚀 STEP 4 — Deploy to Netlify
 
 1. Go to **netlify.com** → Create free account
-2. Drag the entire **aidev-app** folder onto the Netlify deploy area
+2. Drag the entire **Study-Tracker-app** folder onto the Netlify deploy area
 3. Your app goes live at something like: `https://amazing-name.netlify.app`
 
 ---

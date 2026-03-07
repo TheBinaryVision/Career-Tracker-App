@@ -1,6 +1,6 @@
 {
-  "name": "AI Dev Roadmap",
-  "short_name": "AI Dev",
+  "name": "Study Tracker",
+  "short_name": "Study",
   "description": "Track your Full Stack AI Developer journey",
   "start_url": "/index.html",
   "display": "standalone",
