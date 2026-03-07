@@ -126,14 +126,29 @@
     </div>
 
     <!-- GITHUB ACTIVITY -->
-    <div class="card" id="github-card" style="display:none">
+    <div class="card" id="github-card">
       <div class="card-header">
         <span class="card-title">🐙 GitHub Activity</span>
         <span class="card-sub" id="github-username-label"></span>
       </div>
+      <div id="github-setup" style="display:none">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:10px">
+          Add your GitHub username to see your commit activity.
+        </p>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="github-input" placeholder="your-github-username"
+            style="flex:1;min-width:160px;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border2);
+            background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none"/>
+          <button onclick="saveGitHub()"
+            style="padding:9px 16px;border-radius:8px;border:none;background:var(--accent);
+            color:#1a1a2e;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit">
+            Save
+          </button>
+        </div>
+        <p id="github-save-msg" style="font-size:12px;color:var(--green);margin-top:6px"></p>
+      </div>
       <div id="github-commits-list"></div>
     </div>
-
     <!-- RECENT SESSIONS -->
     <div class="card">
       <div class="card-header">

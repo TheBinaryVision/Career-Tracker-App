@@ -1,8 +1,8 @@
 // ============================================================
-//  auth.js  —  Login / Signup logic (used only on index.html)
+//  auth.js — FIXED
+//  Handles existing users missing new fields
 // ============================================================
 
-// Redirect to dashboard if already logged in
 auth.onAuthStateChanged(user => {
   if (user) window.location.href = 'pages/dashboard.html';
 });
@@ -19,12 +19,9 @@ async function loginUser() {
   const password = document.getElementById('login-password').value;
   const errEl    = document.getElementById('login-error');
   errEl.textContent = '';
-
   if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
-
   try {
     await auth.signInWithEmailAndPassword(email, password);
-    // onAuthStateChanged handles redirect
   } catch (e) {
     errEl.textContent = friendlyError(e.code);
   }
@@ -34,7 +31,7 @@ async function signupUser() {
   const name     = document.getElementById('signup-name').value.trim();
   const email    = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
-  const github   = document.getElementById('signup-github').value.trim();
+  const github   = document.getElementById('signup-github').value.trim().replace('@','');
   const errEl    = document.getElementById('signup-error');
   errEl.textContent = '';
 
@@ -44,21 +41,18 @@ async function signupUser() {
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, password);
     await cred.user.updateProfile({ displayName: name });
-
-    // Save user profile to Firestore
     await db.collection('users').doc(cred.user.uid).set({
-      name,
-      email,
+      name, email,
       github: github || '',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      streak: 0,
-      longestStreak: 0,
+      createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+      streak:          0,
+      longestStreak:   0,
       totalDaysActive: 0,
-      totalHours: 0,
-      checkedSkills: {}
+      totalHours:      0,
+      totalOpens:      0,
+      checkedSkills:   {},
+      checkedItems:    {}
     });
-
-    // onAuthStateChanged handles redirect
   } catch (e) {
     errEl.textContent = friendlyError(e.code);
   }
@@ -69,21 +63,32 @@ async function loginGoogle() {
   try {
     const result = await auth.signInWithPopup(provider);
     const user   = result.user;
+    const doc    = await db.collection('users').doc(user.uid).get();
 
-    // Create profile if new user
-    const doc = await db.collection('users').doc(user.uid).get();
     if (!doc.exists) {
+      // New Google user
       await db.collection('users').doc(user.uid).set({
-        name: user.displayName || 'Developer',
-        email: user.email,
-        github: '',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        streak: 0,
-        longestStreak: 0,
+        name:            user.displayName || 'Developer',
+        email:           user.email,
+        github:          '',
+        createdAt:       firebase.firestore.FieldValue.serverTimestamp(),
+        streak:          0,
+        longestStreak:   0,
         totalDaysActive: 0,
-        totalHours: 0,
-        checkedSkills: {}
+        totalHours:      0,
+        totalOpens:      0,
+        checkedSkills:   {},
+        checkedItems:    {}
       });
+    } else {
+      // Existing user — add any missing fields
+      const data    = doc.data();
+      const missing = {};
+      if (data.totalOpens  === undefined) missing.totalOpens  = 0;
+      if (data.checkedItems === undefined) missing.checkedItems = {};
+      if (Object.keys(missing).length > 0) {
+        await db.collection('users').doc(user.uid).update(missing);
+      }
     }
   } catch (e) {
     document.getElementById('login-error').textContent = friendlyError(e.code);
@@ -92,13 +97,14 @@ async function loginGoogle() {
 
 function friendlyError(code) {
   const map = {
-    'auth/user-not-found':      'No account found with this email.',
-    'auth/wrong-password':      'Incorrect password.',
-    'auth/email-already-in-use':'An account already exists with this email.',
-    'auth/invalid-email':       'Please enter a valid email address.',
-    'auth/weak-password':       'Password must be at least 6 characters.',
-    'auth/popup-closed-by-user':'Google sign-in was cancelled.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
+    'auth/user-not-found':        'No account found with this email.',
+    'auth/wrong-password':        'Incorrect password.',
+    'auth/email-already-in-use':  'An account already exists with this email.',
+    'auth/invalid-email':         'Please enter a valid email address.',
+    'auth/weak-password':         'Password must be at least 6 characters.',
+    'auth/popup-closed-by-user':  'Google sign-in was cancelled.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+    'auth/invalid-credential':    'Incorrect email or password.',
   };
   return map[code] || 'Something went wrong. Please try again.';
 }
