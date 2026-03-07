@@ -34,9 +34,7 @@
 /* ---------- PHASE NAV ---------- */
 .phase-nav {
   display: flex; gap: 10px; overflow-x: auto;
-  -ms-overflow-style: none; /* IE, Edge */
-  scrollbar-width: none; /* Firefox; Safari/Chrome use ::-webkit-scrollbar below */
-  padding-bottom: 4px; margin-bottom: 22px;
+  scrollbar-width: none; padding-bottom: 4px; margin-bottom: 22px;
 }
 .phase-nav::-webkit-scrollbar { display: none; }
 
@@ -171,7 +169,6 @@
   cursor: pointer;
   transition: background 0.1s;
   /* CRITICAL: no user-select so text stays visible */
-  -webkit-user-select: none;
   user-select: none;
 }
 .subtopic-row:hover { background: rgba(255,255,255,0.04); }
@@ -257,4 +254,78 @@
   .topic-mini-bar-wrap { width: 50px; }
   .skill-card-header { padding: 13px 14px; }
   .skill-topics { padding: 4px 12px 14px; }
+}
+
+/* ---------- NEXT / PREV PHASE BUTTONS ---------- */
+.phase-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 24px;
+  margin-bottom: 8px;
+}
+
+.phase-nav-btn-large {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border);
+  background: var(--bg2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  text-align: left;
+}
+.phase-nav-btn-large:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(245,166,35,0.07);
+  transform: translateY(-2px);
+}
+.phase-nav-btn-large.next {
+  justify-content: flex-end;
+  text-align: right;
+}
+.phase-nav-btn-large.completed {
+  opacity: 0.7;
+  cursor: default;
+  border-color: rgba(16,185,129,0.4);
+  background: rgba(16,185,129,0.07);
+}
+
+.nav-btn-arrow {
+  font-size: 22px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.phase-nav-btn-large.completed .nav-btn-arrow {
+  font-size: 26px;
+}
+
+.nav-btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.nav-btn-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: monospace;
+  display: block;
+}
+.nav-btn-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  display: block;
+}
+
+@media (max-width: 500px) {
+  .phase-nav-buttons { flex-direction: column; }
+  .phase-nav-btn-large.next { justify-content: flex-start; text-align: left; }
 }

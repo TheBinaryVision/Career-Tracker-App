@@ -6,6 +6,7 @@
 
 let checkedItems = {};   // key: "phaseId-skillName-topicName-subtopic"
 let activePhase  = 1;
+const _keyRegistry = {}; // maps elemId -> full key string, avoids HTML escaping issues
 
 // ---- PAGE INIT ----
 async function pageInit(user) {
@@ -58,8 +59,12 @@ function itemKey(phaseId, skillName, topicName, subtopic) {
   return `${phaseId}||${skillName}||${topicName}||${subtopic}`;
 }
 
-// ---- HANDLE SUBTOPIC CLICK (replaces toggleSubtopic) ----
-async function handleSubtopicClick(rowEl, key) {
+// ---- HANDLE SUBTOPIC CLICK ----
+async function handleSubtopicClick(elemId) {
+  const key = _keyRegistry[elemId];
+  if (!key) return;
+
+  // Toggle
   if (checkedItems[key]) {
     delete checkedItems[key];
   } else {
@@ -68,12 +73,14 @@ async function handleSubtopicClick(rowEl, key) {
   const isDone = !!checkedItems[key];
 
   // Update row visually — no full re-render
-  rowEl.className = 'subtopic-row ' + (isDone ? 'sub-done' : '');
-
-  const cb = rowEl.querySelector('.sub-checkbox');
-  if (cb) {
-    cb.className   = 'sub-checkbox ' + (isDone ? 'checked' : '');
-    cb.textContent = isDone ? '✓' : '';
+  const rowEl = document.getElementById('row-' + elemId);
+  if (rowEl) {
+    rowEl.className = 'subtopic-row' + (isDone ? ' sub-done' : '');
+    const cb = rowEl.querySelector('.sub-checkbox');
+    if (cb) {
+      cb.className   = 'sub-checkbox' + (isDone ? ' checked' : '');
+      cb.textContent = isDone ? '✓' : '';
+    }
   }
 
   refreshProgressBars();
@@ -125,8 +132,13 @@ function renderPhaseNav() {
 
 function switchPhase(id) {
   activePhase = id;
+  // Clear key registry so IDs don't conflict across phase renders
+  Object.keys(_keyRegistry).forEach(k => delete _keyRegistry[k]);
   renderPhaseNav();
   renderPhase(id);
+  // Scroll to top of content
+  const el = document.getElementById('phase-content');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // ---- RENDER A FULL PHASE ----
@@ -222,13 +234,13 @@ function renderPhase(phaseId) {
           <div class="subtopics-list">`;
 
       topic.subtopics.forEach((sub, subIdx) => {
-        const key  = itemKey(phaseId, skill.name, topic.name, sub);
-        const done = !!checkedItems[key];
-        // Store key in a global map, reference by numeric id to avoid ALL escaping issues
-        const elemId = `sub_${Object.keys(checkedItems).length}_${Math.random().toString(36).slice(2,7)}`;
+        const key    = itemKey(phaseId, skill.name, topic.name, sub);
+        const done   = !!checkedItems[key];
+        const elemId = 'k' + (Object.keys(_keyRegistry).length);
+        _keyRegistry[elemId] = key; // store full key safely outside HTML
         html += `
-          <div class="subtopic-row ${done ? 'sub-done' : ''}" id="row-${elemId}" onclick="handleSubtopicClick(this, ${JSON.stringify(key)})">
-            <span class="sub-checkbox ${done ? 'checked' : ''}" id="cb-${elemId}">
+          <div class="subtopic-row ${done ? 'sub-done' : ''}" id="row-${elemId}" onclick="handleSubtopicClick('${elemId}')">
+            <span class="sub-checkbox ${done ? 'checked' : ''}">
               ${done ? '✓' : ''}
             </span>
             <span class="sub-text">${sub}</span>
@@ -249,6 +261,35 @@ function renderPhase(phaseId) {
         <a href="${r.url}" target="_blank" class="resource-link">${r.name}</a>
       `).join('')}
     </div>
+  </div>`;
+
+  // Next / Prev phase navigation buttons
+  const prevPhase = PHASES.find(p => p.id === phaseId - 1);
+  const nextPhase = PHASES.find(p => p.id === phaseId + 1);
+  html += `<div class="phase-nav-buttons">
+    ${prevPhase ? `
+      <button class="phase-nav-btn-large prev" onclick="switchPhase(${prevPhase.id})">
+        <span class="nav-btn-arrow">←</span>
+        <div class="nav-btn-text">
+          <span class="nav-btn-label">Previous Phase</span>
+          <span class="nav-btn-name">${prevPhase.emoji} ${prevPhase.title}</span>
+        </div>
+      </button>` : '<div></div>'}
+    ${nextPhase ? `
+      <button class="phase-nav-btn-large next" onclick="switchPhase(${nextPhase.id})">
+        <div class="nav-btn-text" style="text-align:right">
+          <span class="nav-btn-label">Next Phase</span>
+          <span class="nav-btn-name">${nextPhase.emoji} ${nextPhase.title}</span>
+        </div>
+        <span class="nav-btn-arrow">→</span>
+      </button>` : `
+      <button class="phase-nav-btn-large next completed" disabled>
+        <div class="nav-btn-text" style="text-align:right">
+          <span class="nav-btn-label">🎉 You've completed</span>
+          <span class="nav-btn-name">the full roadmap!</span>
+        </div>
+        <span class="nav-btn-arrow">🚀</span>
+      </button>`}
   </div>`;
 
   container.innerHTML = html;
