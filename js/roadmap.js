@@ -58,16 +58,24 @@ function itemKey(phaseId, skillName, topicName, subtopic) {
   return `${phaseId}||${skillName}||${topicName}||${subtopic}`;
 }
 
-// ---- TOGGLE A SUBTOPIC ----
-async function toggleSubtopic(key, el) {
-  checkedItems[key] = !checkedItems[key];
-  if (!checkedItems[key]) delete checkedItems[key];
+// ---- HANDLE SUBTOPIC CLICK (replaces toggleSubtopic) ----
+async function handleSubtopicClick(rowEl, key) {
+  if (checkedItems[key]) {
+    delete checkedItems[key];
+  } else {
+    checkedItems[key] = true;
+  }
+  const isDone = !!checkedItems[key];
 
-  // Update checkbox visually
-  const cb = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
-  if (cb) updateCheckbox(cb, !!checkedItems[key]);
+  // Update row visually — no full re-render
+  rowEl.className = 'subtopic-row ' + (isDone ? 'sub-done' : '');
 
-  // Update parent topic & skill progress bars
+  const cb = rowEl.querySelector('.sub-checkbox');
+  if (cb) {
+    cb.className   = 'sub-checkbox ' + (isDone ? 'checked' : '');
+    cb.textContent = isDone ? '✓' : '';
+  }
+
   refreshProgressBars();
   updateOverallProgress();
   await saveProgress();
@@ -213,18 +221,18 @@ function renderPhase(phaseId) {
 
           <div class="subtopics-list">`;
 
-      topic.subtopics.forEach(sub => {
-        const key   = itemKey(phaseId, skill.name, topic.name, sub);
-        const done  = !!checkedItems[key];
+      topic.subtopics.forEach((sub, subIdx) => {
+        const key  = itemKey(phaseId, skill.name, topic.name, sub);
+        const done = !!checkedItems[key];
+        // Store key in a global map, reference by numeric id to avoid ALL escaping issues
+        const elemId = `sub_${Object.keys(checkedItems).length}_${Math.random().toString(36).slice(2,7)}`;
         html += `
-          <label class="subtopic-row ${done ? 'sub-done' : ''}" data-key="${key}">
-            <span class="sub-checkbox ${done ? 'checked' : ''}" 
-              data-key="${key}"
-              onclick="event.preventDefault(); toggleSubtopic('${escKey(key)}', this)">
+          <div class="subtopic-row ${done ? 'sub-done' : ''}" id="row-${elemId}" onclick="handleSubtopicClick(this, ${JSON.stringify(key)})">
+            <span class="sub-checkbox ${done ? 'checked' : ''}" id="cb-${elemId}">
               ${done ? '✓' : ''}
             </span>
             <span class="sub-text">${sub}</span>
-          </label>`;
+          </div>`;
       });
 
       html += `</div></div>`; // close subtopics-list, topic-block

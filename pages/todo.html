@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Dev Roadmap — To-Do</title>
+  <title>Career Tracker — To-Do</title>
   <link rel="manifest" href="../manifest.json"/>
   <link rel="stylesheet" href="../css/global.css"/>
   <link rel="stylesheet" href="../css/todo.css"/>
   <meta name="theme-color" content="#0a0a0f"/>
   <link rel="icon" type="image/png" href="../icons/logo.png"/>
+  <link rel="apple-touch-icon" href="../icons/logo.png"/>
 </head>
 <body>
 
   <nav class="navbar">
     <div class="nav-brand">
-      <img src="../icons/logo.png" height="28" style="vertical-align:middle;margin-right:8px"/>
+      <img alt=src="../icons/logo.png" height="28" style="vertical-align:middle;margin-right:8px"/>
       Career Tracker
     </div>
     <div class="nav-links">
@@ -55,14 +56,14 @@
       <div class="add-task-inputs">
         <input type="text" id="new-task-text" placeholder="Add a task… e.g. 'Complete React hooks tutorial'" maxlength="200"/>
         <div class="add-task-row2">
-          <select id="new-task-category" class="task-select">
+          <select id="new-task-category" class="task-select" aria-label="Task category" title="Task category">
             <option value="roadmap">🗺️ Roadmap</option>
             <option value="daily">📅 Daily Goal</option>
             <option value="learning">📚 Learning</option>
             <option value="project">🛠️ Project</option>
             <option value="other">📌 Other</option>
-          </select>
-          <select id="new-task-priority" class="task-select">
+          </>
+          <select id="new-task-priority" class="task-select" aria-label="Task priority" title="Task priority">
             <option value="medium">⚡ Medium</option>
             <option value="high">🔴 High</option>
             <option value="low">🟢 Low</option>
@@ -84,7 +85,7 @@
         <button class="filter-tab" onclick="setFilter('project', this)">🛠️ Project</button>
         <button class="filter-tab" onclick="setFilter('done', this)">✅ Done</button>
       </div>
-      <select class="task-select" id="sort-select" onchange="renderTasks()">
+      <select class="task-select" id="sort-select" onchange="renderTasks()" aria-label="Sort tasks" title="Sort tasks">
         <option value="created">Newest first</option>
         <option value="priority">By priority</option>
         <option value="due">By due date</option>

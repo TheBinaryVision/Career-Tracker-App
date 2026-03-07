@@ -40,6 +40,7 @@ body {
   top: 0;
   z-index: 100;
   background: rgba(10,10,15,0.95);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   padding: 0 24px;
