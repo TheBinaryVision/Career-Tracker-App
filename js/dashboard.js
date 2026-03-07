@@ -1,11 +1,12 @@
 // ============================================================
-//  dashboard.js — FIXED & IMPROVED
-//  Real stats, live timer, GitHub, correct skill count
+//  dashboard.js — FULLY FIXED
 // ============================================================
 
 async function pageInit(user) {
   setGreeting(user);
-  // Load everything in parallel for speed
+  // First repair any missing fields in user doc
+  await repairUserDoc(user.uid);
+  // Load all sections in parallel
   await Promise.all([
     loadStats(user.uid),
     loadHeatmap(user.uid),
@@ -13,15 +14,76 @@ async function pageInit(user) {
     loadRecentSessions(user.uid),
     loadGitHub(user.uid),
   ]);
-  // Start live updating today's time every 30s
-  startStatRefresh(user.uid);
+  // Live refresh today's time every 30s
+  setInterval(async () => {
+    const mins = await Tracker.getTodayTime(user.uid);
+    const el = document.getElementById('stat-today-time');
+    if (el) el.textContent = Tracker.formatTime(mins);
+  }, 30000);
+}
+
+// ---- REPAIR USER DOC (fixes missing fields for existing users) ----
+async function repairUserDoc(uid) {
+  try {
+    const ref  = db.collection('users').doc(uid);
+    const snap = await ref.get();
+    if (!snap.exists) return;
+
+    const d       = snap.data();
+    const updates = {};
+    const today   = new Date().toDateString();
+    const todayISO = new Date().toISOString().split('T')[0];
+
+    // Fix missing fields
+    if (d.streak          === undefined) updates.streak          = 0;
+    if (d.longestStreak   === undefined) updates.longestStreak   = 0;
+    if (d.totalDaysActive === undefined) updates.totalDaysActive = 0;
+    if (d.totalHours      === undefined) updates.totalHours      = 0;
+    if (d.totalOpens      === undefined) updates.totalOpens      = 0;
+    if (d.checkedItems    === undefined) updates.checkedItems    = {};
+
+    // Fix streak — if lastActiveDate is missing or stale, update it
+    if (!d.lastActiveDate) {
+      updates.streak          = 1;
+      updates.longestStreak   = 1;
+      updates.totalDaysActive = 1;
+      updates.lastActiveDate  = today;
+    } else if (d.lastActiveDate !== today) {
+      // New day — increment streak
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const wasYesterday = d.lastActiveDate === yesterday.toDateString();
+      const newStreak    = wasYesterday ? (d.streak || 0) + 1 : 1;
+      updates.streak          = newStreak;
+      updates.longestStreak   = Math.max(newStreak, d.longestStreak || 0);
+      updates.totalDaysActive = (d.totalDaysActive || 0) + 1;
+      updates.lastActiveDate  = today;
+      updates.totalOpens      = (d.totalOpens || 0) + 1;
+    }
+
+    // Compute totalHours from sessions if it's 0 but sessions exist
+    if (!d.totalHours || d.totalHours === 0) {
+      try {
+        const sessSnap = await ref.collection('sessions').get();
+        let totalMin = 0;
+        sessSnap.forEach(s => { totalMin += s.data().durationMin || 0; });
+        if (totalMin > 0) updates.totalHours = totalMin / 60;
+      } catch {}
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await ref.update(updates);
+    }
+  } catch(e) {
+    console.warn('[repair]', e.message);
+  }
 }
 
 // ---- GREETING ----
 function setGreeting(user) {
   const hour = new Date().getHours();
   const time = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
-  const name = (user.displayName || 'Developer').split(' ')[0];
+  const name = (user.displayName || user.email || 'Developer').split(' ')[0];
   const greetEl = document.getElementById('greeting-text');
   const subEl   = document.getElementById('greeting-sub');
   if (greetEl) greetEl.textContent = `Good ${time}, ${name} 👋`;
@@ -44,91 +106,71 @@ function getMotivationalLine() {
 // ---- LOAD STATS ----
 async function loadStats(uid) {
   try {
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (!userDoc.exists) return;
-    const profile = userDoc.data();
+    const snap    = await db.collection('users').doc(uid).get();
+    if (!snap.exists) return;
+    const profile = snap.data();
 
     // Streak
-    const streakEl = document.getElementById('streak-number');
-    if (streakEl) streakEl.textContent = profile.streak || 0;
-
+    setText('streak-number',    profile.streak          || 0);
     // Days active
-    const daysEl = document.getElementById('stat-total-days');
-    if (daysEl) daysEl.textContent = profile.totalDaysActive || 0;
+    setText('stat-total-days',  profile.totalDaysActive || 0);
+    // App opens
+    setText('stat-app-opens',   profile.totalOpens      || 1);
 
     // Total hours
-    const hoursEl = document.getElementById('stat-total-time');
-    if (hoursEl) {
-      const h = profile.totalHours || 0;
-      hoursEl.textContent = h >= 1 ? `${Math.round(h)}h` : `${Math.round(h * 60)}m`;
-    }
+    const h = profile.totalHours || 0;
+    setText('stat-total-time',  h >= 1 ? `${Math.round(h)}h` : `${Math.round(h * 60)}m`);
 
-    // App opens
-    const opensEl = document.getElementById('stat-app-opens');
-    if (opensEl) opensEl.textContent = profile.totalOpens || 1;
+    // Skills done — count from checkedItems (new format) or checkedSkills (old)
+    const items   = profile.checkedItems || profile.checkedSkills || {};
+    const doneCnt = Object.values(items).filter(Boolean).length;
+    setText('stat-skills-done', doneCnt);
 
-    // Skills done — count completed roadmap subtopics
-    const checked = profile.checkedItems || profile.checkedSkills || {};
-    const skillsDoneEl = document.getElementById('stat-skills-done');
-    if (skillsDoneEl) {
-      skillsDoneEl.textContent = Object.values(checked).filter(Boolean).length;
-    }
-
-    // Today's time — live (includes current session)
+    // Today's live time (includes current session)
     const todayMin = await Tracker.getTodayTime(uid);
-    const todayEl  = document.getElementById('stat-today-time');
-    if (todayEl) todayEl.textContent = Tracker.formatTime(todayMin);
+    setText('stat-today-time',  Tracker.formatTime(todayMin));
 
     // Today's check-in efficiency
-    const today = new Date().toISOString().split('T')[0];
-    const ciSnap = await db.collection('users').doc(uid)
+    const today   = new Date().toISOString().split('T')[0];
+    const ciSnap  = await db.collection('users').doc(uid)
       .collection('checkins').where('dateISO', '==', today).limit(1).get();
-
     if (!ciSnap.empty) {
       const ci = ciSnap.docs[0].data();
-      const effEl = document.getElementById('stat-efficiency');
-      if (effEl) effEl.textContent = ci.efficiency ? `${ci.efficiency}/10` : '—';
+      setText('stat-efficiency', ci.efficiency ? `${ci.efficiency}/10` : '—');
     }
 
-  } catch(e) {
-    console.warn('[Dashboard] loadStats error:', e.message);
-  }
+  } catch(e) { console.warn('[loadStats]', e.message); }
 }
 
-// ---- LIVE STAT REFRESH ----
-function startStatRefresh(uid) {
-  // Refresh today's time every 30 seconds
-  setInterval(async () => {
-    const mins   = await Tracker.getTodayTime(uid);
-    const todayEl = document.getElementById('stat-today-time');
-    if (todayEl) todayEl.textContent = Tracker.formatTime(mins);
-  }, 30000);
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
 }
 
 // ---- HEATMAP ----
 async function loadHeatmap(uid) {
   try {
-    const snap = await db.collection('users').doc(uid)
-      .collection('sessions')
-      .orderBy('dateISO', 'desc')
-      .limit(300).get();
-
-    // Also count check-ins as activity
-    const ciSnap = await db.collection('users').doc(uid)
-      .collection('checkins').orderBy('dateISO', 'desc').limit(100).get();
+    const [sessSnap, ciSnap] = await Promise.all([
+      db.collection('users').doc(uid).collection('sessions')
+        .orderBy('dateISO','desc').limit(300).get(),
+      db.collection('users').doc(uid).collection('checkins')
+        .orderBy('dateISO','desc').limit(200).get()
+    ]);
 
     const dayMap = {};
 
-    // Add session minutes
-    snap.forEach(doc => {
-      const d = doc.data().dateISO;
-      if (d) dayMap[d] = (dayMap[d] || 0) + (doc.data().durationMin || 0);
+    sessSnap.forEach(doc => {
+      const d = doc.data();
+      if (d.dateISO) dayMap[d.dateISO] = (dayMap[d.dateISO] || 0) + (d.durationMin || 0);
     });
 
-    // Mark check-in days (minimum 30 min if they checked in)
+    // Count check-in days as at least 30 min activity
     ciSnap.forEach(doc => {
-      const d = doc.data().dateISO;
-      if (d && !dayMap[d]) dayMap[d] = 30;
+      const d = doc.data();
+      if (d.dateISO) {
+        const hrs = (d.hoursWorked || 0) * 60;
+        dayMap[d.dateISO] = Math.max(dayMap[d.dateISO] || 0, hrs || 30);
+      }
     });
 
     const container = document.getElementById('heatmap');
@@ -137,11 +179,8 @@ async function loadHeatmap(uid) {
 
     const today = new Date();
     today.setHours(0,0,0,0);
-
-    // Start from 84 days ago (12 weeks), aligned to Sunday
     const start = new Date(today);
-    const dayOfWeek = today.getDay();
-    start.setDate(today.getDate() - 83 - dayOfWeek);
+    start.setDate(today.getDate() - (today.getDay()) - (12 * 7));
 
     for (let w = 0; w < 13; w++) {
       const col = document.createElement('div');
@@ -149,7 +188,7 @@ async function loadHeatmap(uid) {
       for (let d = 0; d < 7; d++) {
         const date = new Date(start);
         date.setDate(start.getDate() + w * 7 + d);
-        if (date > today) continue; // skip future
+        if (date > today) continue;
         const iso   = date.toISOString().split('T')[0];
         const mins  = dayMap[iso] || 0;
         const level = mins === 0 ? 0 : mins < 30 ? 1 : mins < 60 ? 2 : mins < 120 ? 3 : 4;
@@ -160,9 +199,7 @@ async function loadHeatmap(uid) {
       }
       container.appendChild(col);
     }
-  } catch(e) {
-    console.warn('[Dashboard] heatmap error:', e.message);
-  }
+  } catch(e) { console.warn('[heatmap]', e.message); }
 }
 
 // ---- TODAY'S LOG ----
@@ -170,8 +207,7 @@ async function loadTodayLog(uid) {
   try {
     const today = new Date().toISOString().split('T')[0];
     const snap  = await db.collection('users').doc(uid)
-      .collection('checkins').where('dateISO', '==', today).limit(1).get();
-
+      .collection('checkins').where('dateISO','==',today).limit(1).get();
     const el = document.getElementById('today-log-content');
     if (!el) return;
 
@@ -182,175 +218,144 @@ async function loadTodayLog(uid) {
 
     const d = snap.docs[0].data();
     const moodEmojis = { 5:'😄', 4:'🙂', 3:'😐', 2:'😕', 1:'😩' };
-
     el.innerHTML = `
       <div class="log-item"><span class="log-label">Mood</span><span>${moodEmojis[d.mood] || '—'}</span></div>
       <div class="log-item"><span class="log-label">Energy</span><span>${d.energy || '—'}/10</span></div>
       <div class="log-item"><span class="log-label">Hours</span><span>${d.hoursWorked || '—'}h</span></div>
       <div class="log-item"><span class="log-label">Efficiency</span><span>${d.efficiency || '—'}/10</span></div>
       ${d.accomplishment ? `<div class="log-item"><span class="log-label">✅ Done</span><span>${d.accomplishment}</span></div>` : ''}
-      ${d.win           ? `<div class="log-item"><span class="log-label">🏆 Win</span><span>${d.win}</span></div>` : ''}
-      ${d.tools?.length ? `<div class="log-item"><span class="log-label">🛠️ Tools</span><span>${d.tools.join(', ')}</span></div>` : ''}
+      ${d.win            ? `<div class="log-item"><span class="log-label">🏆 Win</span><span>${d.win}</span></div>` : ''}
+      ${d.tools?.length  ? `<div class="log-item"><span class="log-label">🛠️ Tools</span><span>${d.tools.join(', ')}</span></div>` : ''}
     `;
-  } catch(e) {
-    console.warn('[Dashboard] todayLog error:', e.message);
-  }
+  } catch(e) { console.warn('[todayLog]', e.message); }
+}
+
+// ---- RECENT SESSIONS ----
+async function loadRecentSessions(uid) {
+  try {
+    const snap = await db.collection('users').doc(uid)
+      .collection('sessions').orderBy('startedAt','desc').limit(10).get();
+    const el = document.getElementById('recent-sessions');
+    if (!el) return;
+
+    if (snap.empty) {
+      el.innerHTML = `<div class="empty-state">No sessions yet. Keep the app open and your time will be tracked automatically.</div>`;
+      return;
+    }
+
+    el.innerHTML = snap.docs.map(doc => {
+      const d    = doc.data();
+      const date = d.startedAt?.toDate
+        ? d.startedAt.toDate().toLocaleDateString('en-IN',
+            { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        : d.date || '';
+      return `
+        <div class="session-row">
+          <span class="session-date">${date}</span>
+          <span style="color:var(--muted);font-size:12px">${d.device||''} · ${d.browser||''}</span>
+          <span class="session-duration">${Tracker.formatTime(d.durationMin || 0)}</span>
+        </div>`;
+    }).join('');
+  } catch(e) { console.warn('[sessions]', e.message); }
 }
 
 // ---- GITHUB ----
 async function loadGitHub(uid) {
   try {
-    const profileDoc = await db.collection('users').doc(uid).get();
-    const profile    = profileDoc.data();
+    const profileSnap = await db.collection('users').doc(uid).get();
+    const profile     = profileSnap.data() || {};
+    const username    = (profile.github || profile.githubUsername || '').trim().replace('@','');
 
-    // Try both field names in case user saved it differently
-    const username = profile?.github || profile?.githubUsername || profile?.githubId || '';
-    if (!username || username.trim() === '') {
-      // Show the setup card so user can add GitHub username
-      const card  = document.getElementById('github-card');
-      const setup = document.getElementById('github-setup');
+    const card  = document.getElementById('github-card');
+    const setup = document.getElementById('github-setup');
+
+    if (!username) {
       if (card)  card.style.display  = 'block';
       if (setup) setup.style.display = 'block';
-      console.log('[GitHub] No username — showing setup');
       return;
     }
 
-    const cleanName = username.trim().replace('@','');
-    console.log('[GitHub] Fetching for:', cleanName);
-
-    // Show card, hide setup box
-    const card  = document.getElementById('github-card');
-    const setup = document.getElementById('github-setup');
     if (card)  card.style.display  = 'block';
     if (setup) setup.style.display = 'none';
 
-    // Fetch user info + events in parallel
+    const label = document.getElementById('github-username-label');
+    if (label) label.textContent = `@${username}`;
+
     const [userRes, eventsRes] = await Promise.all([
-      fetch(`https://api.github.com/users/${cleanName}`),
-      fetch(`https://api.github.com/users/${cleanName}/events/public?per_page=50`)
+      fetch(`https://api.github.com/users/${username}`),
+      fetch(`https://api.github.com/users/${username}/events/public?per_page=50`)
     ]);
 
     if (!userRes.ok) {
-      console.warn('[GitHub] User not found:', userRes.status);
+      const list = document.getElementById('github-commits-list');
+      if (list) list.innerHTML = `<div class="empty-state" style="font-size:13px">GitHub user "@${username}" not found. <button onclick="document.getElementById('github-setup').style.display='block'" style="color:var(--accent);background:none;border:none;cursor:pointer;font-size:13px">Update username</button></div>`;
       return;
     }
 
-    const ghUser  = await userRes.json();
-    const events  = await eventsRes.json();
+    const ghUser = await userRes.json();
+    const events = eventsRes.ok ? await eventsRes.json() : [];
 
-    if (!Array.isArray(events)) {
-      console.warn('[GitHub] Events not array:', events);
-      return;
-    }
+    if (!Array.isArray(events)) return;
 
-    // Card already shown above
+    // Commits in last 30 days
+    const cutoff      = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+    const pushes      = events.filter(e => e.type === 'PushEvent' && new Date(e.created_at) > cutoff);
+    const totalCommits = pushes.reduce((s, e) => s + (e.payload?.commits?.length || 0), 0);
 
-    const label = document.getElementById('github-username-label');
-    if (label) label.textContent = `@${cleanName}`;
+    setText('stat-github', totalCommits || ghUser.public_repos || 0);
 
-    // Count push events (commits) in last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentPushes = events.filter(e =>
-      e.type === 'PushEvent' && new Date(e.created_at) > thirtyDaysAgo
-    );
-
-    const totalCommits = recentPushes.reduce((sum, e) =>
-      sum + (e.payload?.commits?.length || 0), 0
-    );
-
-    // Update stat card
-    const statEl = document.getElementById('stat-github');
-    if (statEl) statEl.textContent = totalCommits > 0 ? `${totalCommits}` : ghUser.public_repos || 0;
-
-    // Also show public repos count
-    const repoEl = document.getElementById('stat-github-repos');
-    if (repoEl) repoEl.textContent = ghUser.public_repos || 0;
-
-    // Render commit list
     const list = document.getElementById('github-commits-list');
     if (!list) return;
 
-    if (!recentPushes.length) {
-      list.innerHTML = `<div class="empty-state" style="font-size:13px">No recent pushes found for @${cleanName}.<br/>Start committing! 💪</div>`;
+    if (!pushes.length) {
+      list.innerHTML = `
+        <div style="display:flex;gap:16px;padding:12px 0;flex-wrap:wrap">
+          <div style="text-align:center;padding:10px 16px;background:var(--bg3);border-radius:10px;min-width:80px">
+            <div style="font-size:22px;font-weight:900;color:var(--accent)">${ghUser.public_repos||0}</div>
+            <div style="font-size:11px;color:var(--muted)">Repos</div>
+          </div>
+          <div style="text-align:center;padding:10px 16px;background:var(--bg3);border-radius:10px;min-width:80px">
+            <div style="font-size:22px;font-weight:900;color:var(--blue)">${ghUser.followers||0}</div>
+            <div style="font-size:11px;color:var(--muted)">Followers</div>
+          </div>
+        </div>
+        <div class="empty-state" style="font-size:13px;padding:8px 0">No recent pushes. Start committing! 💪</div>`;
       return;
     }
 
-    list.innerHTML = recentPushes.slice(0, 8).map(e => {
+    list.innerHTML = pushes.slice(0,8).map(e => {
       const commits = e.payload?.commits || [];
       const msg     = commits[0]?.message || 'No message';
-      const repo    = e.repo?.name?.split('/')[1] || e.repo?.name || '';
+      const repo    = e.repo?.name?.split('/')[1] || '';
       const date    = new Date(e.created_at).toLocaleDateString('en-IN', { month:'short', day:'numeric' });
-      const count   = commits.length;
+      const cnt     = commits.length;
       return `
         <div class="commit-row">
-          <div class="commit-repo">
-            📁 ${repo}
+          <div class="commit-repo">📁 ${repo}
             <span style="color:var(--muted);font-weight:400"> · ${date}</span>
-            <span class="commit-count">${count} commit${count > 1 ? 's' : ''}</span>
+            <span class="commit-count">${cnt} commit${cnt>1?'s':''}</span>
           </div>
-          <div class="commit-msg">${msg.slice(0,90)}${msg.length > 90 ? '…' : ''}</div>
+          <div class="commit-msg">${msg.slice(0,90)}${msg.length>90?'…':''}</div>
         </div>`;
     }).join('');
 
-  } catch(e) {
-    console.warn('[GitHub] fetch failed:', e.message);
-  }
+  } catch(e) { console.warn('[github]', e.message); }
 }
 
-// ---- SAVE GITHUB USERNAME (for users who didn't set it on signup) ----
+// ---- SAVE GITHUB USERNAME ----
 async function saveGitHub() {
   const uid   = getUID();
   const input = document.getElementById('github-input');
   const msg   = document.getElementById('github-save-msg');
   if (!input || !uid) return;
-
   const username = input.value.trim().replace('@','');
   if (!username) return;
-
   try {
     await db.collection('users').doc(uid).update({ github: username });
-    if (msg) msg.textContent = '✅ Saved! Loading your GitHub activity...';
+    if (msg) msg.textContent = '✅ Saved! Loading...';
     document.getElementById('github-setup').style.display = 'none';
     await loadGitHub(uid);
   } catch(e) {
     if (msg) msg.textContent = 'Failed to save. Try again.';
-  }
-}
-
-// ---- LOAD RECENT SESSIONS ----
-async function loadRecentSessions(uid) {
-  try {
-    const snap = await db.collection('users').doc(uid)
-      .collection('sessions')
-      .orderBy('startedAt', 'desc')
-      .limit(10).get();
-
-    const el    = document.getElementById('recent-sessions');
-    const cntEl = document.getElementById('stat-sessions-count');
-    if (!el) return;
-
-    if (snap.empty) {
-      el.innerHTML = `<div class="empty-state">No sessions yet.<br/>Your time on the app will appear here.</div>`;
-      return;
-    }
-
-    if (cntEl) cntEl.textContent = `${snap.size} recent`;
-
-    el.innerHTML = snap.docs.map(doc => {
-      const d    = doc.data();
-      const date = d.startedAt?.toDate
-        ? d.startedAt.toDate().toLocaleDateString('en-IN', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
-        : d.date || '';
-      return `
-        <div class="session-row">
-          <span class="session-date">${date}</span>
-          <span style="color:var(--muted);font-size:12px">${d.device || ''} · ${d.browser || ''}</span>
-          <span class="session-duration">${Tracker.formatTime(d.durationMin || 0)}</span>
-        </div>`;
-    }).join('');
-  } catch(e) {
-    console.warn('[Dashboard] sessions error:', e.message);
   }
 }
