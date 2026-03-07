@@ -169,6 +169,7 @@
   cursor: pointer;
   transition: background 0.1s;
   /* CRITICAL: no user-select so text stays visible */
+  -webkit-user-select: none;
   user-select: none;
 }
 .subtopic-row:hover { background: rgba(255,255,255,0.04); }
