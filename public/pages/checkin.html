@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Tracker — Daily Check-In</title>
+  <link rel="stylesheet" href="../css/global.css"/>
+  <link rel="stylesheet" href="../css/checkin.css"/>
+  <link rel="stylesheet" href="../css/todo.css"/>
+  <link rel="icon" type="image/png" href="../icons/logo.png"/>
+</head>
+<body>
+  <nav class="navbar"><div class="nav-brand">
+    <img alt="Study Tracker Logo" src="../icons/logo.png" height="28" style="vertical-align:middle;margin-right:8px"/>
+    Study Tracker
+  </div>
+    <div class="nav-links">
+      <a href="dashboard.html" class="nav-link">Dashboard</a>
+      <a href="roadmap.html" class="nav-link">Roadmap</a>
+      <a href="checkin.html" class="nav-link active">Check-In</a>
+      <a href="todo.html" class="nav-link">To-Do</a>
+      <a href="analytics.html" class="nav-link">Analytics</a>
+    </div>
+    <div class="nav-user">
+      <span id="nav-username"></span>
+      <button class="btn-logout" onclick="logoutUser()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" class="offline-banner" style="display:none">
+    <span>📡 You're offline —</span>
+    <span id="offline-queue-count">Changes will sync when back online</span>
+  </div>
+
+  <main class="main-content">
+    <div class="checkin-container">
+      <div class="checkin-header">
+        <div class="checkin-label">Daily Check-In</div>
+        <h2 class="checkin-title" id="checkin-date"></h2>
+        <p class="checkin-sub">Track what you did, how you feel, and how productive today was.</p>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="step-progress">
+        <div class="step-dot active" id="dot-1">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-2">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-3">3</div>
+        <div class="step-line"></div>
+        <div class="step-dot" id="dot-4">4</div>
+      </div>
+
+      <!-- STEP 1: HOW WAS YOUR DAY -->
+      <div class="step-panel" id="step-1">
+        <h3>How was your day overall?</h3>
+        <div class="mood-grid">
+          <button class="mood-btn" data-mood="5" onclick="selectMood(5)">😄<span>Excellent</span></button>
+          <button class="mood-btn" data-mood="4" onclick="selectMood(4)">🙂<span>Good</span></button>
+          <button class="mood-btn" data-mood="3" onclick="selectMood(3)">😐<span>Okay</span></button>
+          <button class="mood-btn" data-mood="2" onclick="selectMood(2)">😕<span>Tough</span></button>
+          <button class="mood-btn" data-mood="1" onclick="selectMood(1)">😩<span>Bad</span></button>
+        </div>
+        <div class="scale-row">
+          <label>Energy Level</label>
+          <div class="scale-btns" id="scale-energy"></div>
+        </div>
+        <div class="scale-row">
+          <label>Focus Level</label>
+          <div class="scale-btns" id="scale-focus"></div>
+        </div>
+        <button class="btn-next" onclick="goStep(2)">Next →</button>
+      </div>
+
+      <!-- STEP 2: WHAT DID YOU WORK ON -->
+      <div class="step-panel hidden" id="step-2">
+        <h3>What did you work on today?</h3>
+        <div class="tag-select-label">Languages / Tools used</div>
+        <div class="tag-grid" id="tool-tags"></div>
+        <div class="input-group mt-16">
+          <label>Add custom tool / topic</label>
+          <input type="text" id="custom-tool" placeholder="e.g. Docker, GraphQL, System Design..."/>
+          <button class="btn-sm mt-8" onclick="addCustomTool()">+ Add</button>
+        </div>
+        <div class="input-group mt-16">
+          <label>What did you accomplish today? (be specific)</label>
+          <textarea id="accomplishment" rows="3" placeholder="e.g. Built login page with Firebase auth, fixed 3 bugs in API..."></textarea>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(1)">← Back</button>
+          <button class="btn-next" onclick="goStep(3)">Next →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: TIME & EFFICIENCY -->
+      <div class="step-panel hidden" id="step-3">
+        <h3>Time & Efficiency</h3>
+        <div class="scale-row">
+          <label>Hours spent coding today</label>
+          <div class="hour-btns" id="hour-select"></div>
+        </div>
+        <div class="scale-row mt-20">
+          <label>How efficient were you? (1 = wasted time, 10 = deep focus)</label>
+          <div class="scale-btns" id="scale-efficiency"></div>
+        </div>
+        <div class="scale-row mt-20">
+          <label>Working capacity today (how much could you have done?)</label>
+          <div class="capacity-btns">
+            <button class="cap-btn" data-cap="low" onclick="selectCapacity('low')">🪫 Low</button>
+            <button class="cap-btn" data-cap="medium" onclick="selectCapacity('medium')">⚡ Medium</button>
+            <button class="cap-btn" data-cap="high" onclick="selectCapacity('high')">🚀 High</button>
+            <button class="cap-btn" data-cap="peak" onclick="selectCapacity('peak')">🔥 Peak</button>
+          </div>
+        </div>
+        <div class="input-group mt-16">
+          <label>What blocked you? (optional)</label>
+          <input type="text" id="blocker" placeholder="e.g. Internet issues, unclear requirements, tired..."/>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(2)">← Back</button>
+          <button class="btn-next" onclick="goStep(4)">Next →</button>
+        </div>
+      </div>
+
+      <!-- STEP 4: GOALS -->
+      <div class="step-panel hidden" id="step-4">
+        <h3>Goals & Reflection</h3>
+        <div class="input-group">
+          <label>Tomorrow's top priority</label>
+          <input type="text" id="tomorrow-goal" placeholder="e.g. Finish backend auth, start React course..."/>
+        </div>
+        <div class="scale-row mt-16">
+          <label>How aligned was today with your career goal? (1–10)</label>
+          <div class="scale-btns" id="scale-alignment"></div>
+        </div>
+        <div class="input-group mt-16">
+          <label>One win from today 🏆</label>
+          <input type="text" id="win-today" placeholder="e.g. Finally understood async/await!"/>
+        </div>
+        <div class="nav-btns">
+          <button class="btn-back" onclick="goStep(3)">← Back</button>
+          <button class="btn-primary" onclick="submitCheckin()">Save Check-In ✓</button>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="step-panel hidden" id="step-success">
+        <div class="success-icon">✅</div>
+        <h3>Check-in saved!</h3>
+        <p style="color:var(--muted);margin:8px 0 24px">Your progress has been recorded.</p>
+        <div id="checkin-summary"></div>
+        <button class="btn-primary mt-20" onclick="window.location.href='dashboard.html'">Go to Dashboard →</button>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/offline-queue.js"></script>
+  <script src="../js/tracker.js"></script>
+  <script src="../js/checkin.js"></script>
+  <!-- FOOTER -->
+<footer class="app-footer">
+  <div class="footer-inner">
+    <img src="../icons/logo.png" height="28" class="footer-logo" alt="Study Tracker"/>
+    <div class="footer-text">
+      <span class="footer-made">Designed & Built by</span>
+      <span class="footer-name">Roshan Vishwakarma</span>
+    </div>
+    <div class="footer-brands">
+      <span class="footer-brand">⬡ The Binary Vision</span>
+      <span class="footer-dot">·</span>
+      <span class="footer-brand">🎭 RolePlayer</span>
+    </div>
+    <div class="footer-copy">© 2025 Study Tracker App · All rights reserved</div>
+  </div>
+</footer>
+<!-- BOTTOM NAV — mobile only -->
+<nav class="bottom-nav">
+  <a href="dashboard.html" class="bottom-nav-item">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Home</span>
+  </a>
+  <a href="roadmap.html" class="bottom-nav-item">
+    <span class="nav-icon">🗺️</span>
+    <span class="nav-label">Roadmap</span>
+  </a>
+  <a href="checkin.html" class="bottom-nav-item">
+    <span class="nav-icon">✍️</span>
+    <span class="nav-label">Check-In</span>
+  </a>
+  <a href="todo.html" class="bottom-nav-item">
+    <span class="nav-icon">📝</span>
+    <span class="nav-label">To-Do</span>
+  </a>
+  <a href="analytics.html" class="bottom-nav-item">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Analytics</span>
+  </a>
+</nav>
+</body>
+</html>
